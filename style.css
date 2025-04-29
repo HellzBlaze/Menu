@@ -37,7 +37,7 @@ body {
     font-family: var(--font-family);
     line-height: 1.7;
     background-color: #f4f7f6; /* A soft, neutral background color */
-    background-image: url("https://www.transparenttextures.com/patterns/lined-paper.png"); /* Example subtle pattern */
+    background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKOQ9Ys6kYtEa2B9z86qAik1X1jlsEZMBYdJ60xTglRJrJukbwECYWwttV&s=10"); /* Example subtle pattern */
     /* You can replace the above URL with your desired background image */
     /* background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKOQ9Ys6kYtEa2B9z86qAik1X1jlsEZMBYdJ60xTglRJrJukbwECYWwttV&s=10"); */
     background-size: cover; /* Or 'auto', 'contain' depending on the image */
