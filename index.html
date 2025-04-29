@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Order System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-view" class="view login-container">
+        <h2>Welcome! Please Login</h2>
+        <div class="form-group">
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" placeholder="Enter your name" required>
+        </div>
+        <div class="form-group">
+            <label>Select Role:</label>
+            <div>
+                <input type="radio" id="role-customer" name="role" value="customer" checked>
+                <label for="role-customer">I am a Customer</label>
+            </div>
+            <div>
+                <input type="radio" id="role-employee" name="role" value="employee">
+                <label for="role-employee">I am an Employee</label>
+            </div>
+        </div>
+        <button id="login-btn">Enter</button>
+        <p id="login-error" class="error-message"></p>
+    </div>
+
+    <div id="app-container" style="display: none;"> <!-- Initially hidden -->
+        <header class="app-header">
+            <h1>Restaurant Ordering</h1>
+            <div id="user-info">
+                <span>Welcome, <strong id="logged-in-user-name">User</strong> (<em id="logged-in-user-role">Role</em>)</span>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Customer View -->
+            <div id="customer-view" class="view" style="display: none;"> <!-- Initially hidden -->
+                <h2>Customer Order</h2>
+                <div class="menu">
+                    <h3>Menu</h3>
+                    <ul id="menu-items">
+                        <li>Loading menu...</li>
+                    </ul>
+                </div>
+                <div class="order-summary">
+                    <h3>Your Order</h3>
+                    <ul id="cart-items">
+                        <li id="empty-cart-message">Your cart is empty.</li>
+                    </ul>
+                    <p class="total">Total: ₹<span id="cart-total">0.00</span></p> <!-- Currency Change -->
+                    <button id="submit-order-btn" disabled>Submit Order</button>
+                    <p id="order-confirmation" class="confirmation-message"></p>
+                </div>
+            </div>
+
+            <!-- Employee View -->
+            <div id="employee-view" class="view" style="display: none;"> <!-- Initially hidden -->
+                <h2>Incoming Orders</h2>
+                <button id="clear-all-orders-btn">Clear All Orders (Admin)</button>
+                <div id="incoming-orders">
+                    <p>No orders yet.</p>
+                </div>
+            </div>
+        </div> <!-- End .container -->
+    </div> <!-- End #app-container -->
+
+    <script src="script.js"></script>
+</body>
+</html>
