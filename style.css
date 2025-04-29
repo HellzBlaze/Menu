@@ -1,0 +1,609 @@
+/* --- Google Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- CSS Variables (Color Palette & Theme) --- */
+:root {
+    --primary-color: #e55f3c; /* Warm orange/coral */
+    --primary-dark: #c84a2a;
+    --secondary-color: #3a4d6b; /* Dark muted blue */
+    --light-bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-dark: #212529;
+    --text-light: #6c757d;
+    --border-color: #dee2e6;
+    --success-color: #28a745;
+    --success-dark: #218838;
+    --danger-color: #dc3545;
+    --danger-dark: #c82333;
+    --warning-color: #ffc107;
+    --warning-dark: #e0a800;
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 6px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Base & Reset Styles --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.7;
+    background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKOQ9Ys6kYtEa2B9z86qAik1X1jlsEZMBYdJ60xTglRJrJukbwECYWwttV&s=10");/* Final */
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure footer (if any) stays down */
+}
+
+h1, h2, h3, h4 {
+    color: var(--secondary-color);
+    margin-bottom: 0.8em;
+    font-weight: 600;
+    line-height: 1.3;
+}
+h1 { font-size: 2rem; text-align: center; padding: 20px 0;}
+h2 { font-size: 1.6rem; text-align: center; margin-top: 10px;}
+h3 { font-size: 1.3rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px;}
+h4 { font-size: 1.1rem; margin-bottom: 10px; color: var(--secondary-color);}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+button {
+    font-family: var(--font-family);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    border: none;
+    padding: 10px 20px;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+button:active {
+    transform: translateY(1px); /* Subtle press effect */
+}
+
+button:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* --- Login View --- */
+.login-container {
+    max-width: 450px;
+    margin: 60px auto;
+    padding: 35px 40px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-align: center;
+}
+
+.login-container h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-light);
+    font-size: 0.9em;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(229, 95, 60, 0.2);
+}
+
+.form-group input[type="radio"] {
+    margin-right: 8px;
+    accent-color: var(--primary-color); /* Modern way to color radios/checkboxes */
+}
+.form-group input[type="radio"] + label {
+    display: inline-block; /* Keep label next to radio */
+    font-weight: 400;
+    color: var(--text-dark);
+    font-size: 1em;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+
+.form-group div {
+    margin-bottom: 10px;
+}
+
+#login-btn {
+    background-color: var(--primary-color);
+    color: white;
+    width: 100%; /* Full width login button */
+    padding: 12px 20px;
+    font-size: 1.1em;
+    margin-top: 15px;
+}
+
+#login-btn:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 0.9em;
+    margin-top: 15px;
+    min-height: 1.2em;
+    font-weight: 500;
+}
+
+/* --- App Header --- */
+.app-header {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.app-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: white;
+    text-align: left;
+    padding: 0;
+}
+#user-info {
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+}
+#user-info strong {
+    color: var(--warning-color); /* Highlight name */
+    margin: 0 3px;
+}
+#user-info em {
+    color: #bdc3c7; /* Lighter role color */
+    font-style: normal;
+    margin-left: 3px;
+    margin-right: 15px;
+}
+
+#logout-btn {
+    background-color: var(--danger-color);
+    color: white;
+    font-size: 0.85em;
+    padding: 6px 12px;
+}
+#logout-btn:hover {
+    background-color: var(--danger-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Main App Container & Views --- */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: center;
+    padding: 30px;
+    max-width: 1300px; /* Limit max width */
+    margin: 0 auto; /* Center the container */
+    width: 100%;
+}
+
+.view {
+    background-color: var(--card-bg);
+    padding: 25px 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    flex: 1;
+    min-width: 380px; /* Slightly larger min-width */
+    max-width: 650px;
+    display: flex; /* Use flex for internal layout */
+    flex-direction: column; /* Stack elements vertically */
+}
+
+/* --- Menu & Cart Specific Styles --- */
+.menu, .order-summary {
+    margin-bottom: 20px; /* Space between sections */
+}
+
+.menu li, .order-summary li {
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 5px; /* Adjusted padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.15s ease;
+}
+/* Subtle hover on menu/cart items */
+.menu li:hover, .order-summary li:hover:not(#empty-cart-message) {
+     background-color: #f8f9fa;
+}
+
+.menu li:last-child, .order-summary li:last-child {
+    border-bottom: none;
+}
+
+/* Add Button */
+.menu button {
+    background-color: var(--success-color);
+    color: white;
+    padding: 6px 14px; /* Smaller padding for add/remove buttons */
+    font-size: 0.9em;
+    margin-left: 15px; /* Space from price */
+    min-width: 60px; /* Ensure consistent width */
+    text-align: center;
+}
+.menu button:hover:not(:disabled) {
+    background-color: var(--success-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove Button */
+.remove-item-btn {
+    background-color: var(--danger-color);
+    color: white;
+    padding: 4px 10px; /* Even smaller for remove */
+    font-size: 0.9em;
+    margin-left: 10px;
+    line-height: 1; /* Ensure '-' is centered */
+    min-width: 30px; /* Small width */
+}
+.remove-item-btn:hover:not(:disabled) {
+    background-color: var(--danger-dark);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.item-name {
+    flex-grow: 1;
+    margin-right: 10px;
+    font-weight: 500; /* Slightly bolder name */
+}
+
+/* --- Add these styles to style.css --- */
+
+.menu li {
+    /* Existing styles for menu list items */
+    align-items: flex-start; /* Align items to the top if description makes one side taller */
+}
+
+.menu-item-details {
+    flex-grow: 1; /* Allow details section to take up available space */
+    margin-right: 15px; /* Space between details and price/button */
+    display: flex;       /* Use flexbox for vertical alignment */
+    flex-direction: column; /* Stack name and description */
+    justify-content: center; /* Vertically center if align-items: center is used on li */
+    min-height: 40px; /* Ensure a minimum height even without description */
+}
+
+.item-description {
+    font-size: 0.85em; /* Smaller font size for description */
+    color: var(--text-light); /* Lighter text color */
+    margin-top: 4px; /* Space between name and description */
+    line-height: 1.4; /* Adjust line height for readability */
+    font-weight: 300; /* Lighter font weight */
+}
+
+.menu-item-action {
+    display: flex; /* Arrange price and button horizontally */
+    align-items: center; /* Vertically align price and button */
+    min-width: 150px; /* Ensure enough space for price and button */
+    justify-content: flex-end; /* Align price/button to the right */
+    flex-shrink: 0; /* Prevent this section from shrinking */
+    margin-left: auto; /* Push to the right */
+}
+
+.menu-item-action .item-price {
+     margin-right: 15px; /* Space between price and add button */
+     min-width: auto; /* Override previous min-width if needed */
+}
+
+/* Adjust responsive styles if needed */
+@media (max-width: 480px) {
+     .menu li {
+        /* Keep existing stacking behavior or adjust */
+        flex-direction: column;
+        align-items: stretch; /* Stretch children full width */
+     }
+    .menu-item-details {
+        margin-right: 0; /* No right margin when stacked */
+        margin-bottom: 10px; /* Space below details when stacked */
+    }
+    .menu-item-action {
+        min-width: auto; /* Allow action area to be full width */
+        justify-content: space-between; /* Space out price and button */
+        width: 100%;
+        margin-left: 0; /* No left margin when stacked */
+    }
+    .menu-item-action .item-price {
+        margin-right: 10px; /* Reduce space */
+    }
+}
+
+.item-price {
+    min-width: 80px; /* Ensure enough space for currency */
+    text-align: right;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.cart-item-details {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.cart-item-quantity {
+    font-weight: 600; /* Bolder quantity */
+    margin-right: 8px;
+    min-width: 25px;
+    text-align: center;
+    color: var(--primary-color); /* Highlight quantity */
+}
+
+#empty-cart-message {
+    color: var(--text-light);
+    font-style: italic;
+    text-align: center;
+    justify-content: center;
+    padding: 20px 0;
+    background-color: transparent !important; /* Override hover */
+}
+
+.total {
+    font-weight: 600;
+    font-size: 1.3em;
+    text-align: right;
+    margin-top: 20px;
+    border-top: 2px solid var(--secondary-color);
+    padding-top: 15px;
+    color: var(--secondary-color);
+}
+
+/* Submit Order Button */
+#submit-order-btn {
+    background-color: var(--primary-color);
+    color: white;
+    width: 100%; /* Full width */
+    padding: 12px 20px;
+    font-size: 1.1em;
+    margin-top: 15px;
+}
+#submit-order-btn:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.confirmation-message {
+    color: var(--success-dark);
+    background-color: #e9f7ec; /* Light green background */
+    border: 1px solid #c3e6cb; /* Green border */
+    font-weight: 500;
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    display: none; /* Hidden initially */
+}
+
+/* --- Employee View --- */
+#employee-view {
+    background-color: #eef2f7; /* Slightly different background for employee view */
+}
+
+#employee-view h2 {
+    color: var(--secondary-color);
+}
+
+/* Clear All Button */
+#clear-all-orders-btn {
+    background-color: var(--warning-color);
+    color: var(--text-dark);
+    display: block;
+    margin: 0 auto 25px auto; /* Center the button */
+    padding: 8px 18px;
+    font-weight: 600;
+}
+#clear-all-orders-btn:hover:not(:disabled) {
+    background-color: var(--warning-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+#incoming-orders {
+    margin-top: 15px;
+    max-height: 60vh; /* Limit height and allow scroll */
+    overflow-y: auto; /* Add scrollbar if content overflows */
+    padding-right: 10px; /* Space for scrollbar */
+}
+/* Customize scrollbar (optional, webkit browsers) */
+#incoming-orders::-webkit-scrollbar {
+  width: 8px;
+}
+#incoming-orders::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+#incoming-orders::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+#incoming-orders::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+
+#incoming-orders .order {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+}
+#incoming-orders .order:hover {
+     box-shadow: var(--box-shadow-hover);
+}
+
+
+#incoming-orders .order h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.05rem; /* Slightly smaller heading */
+}
+
+#incoming-orders .order-id {
+    font-weight: 700; /* Bolder Order ID */
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+#incoming-orders .order-time {
+    font-size: 0.85em;
+    color: var(--text-light);
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+#incoming-orders p { /* Style customer name paragraph */
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+#incoming-orders p strong {
+     color: var(--secondary-color);
+     margin-right: 5px;
+}
+
+#incoming-orders ul {
+    padding-left: 5px; /* Less indent */
+    margin-bottom: 15px;
+}
+
+#incoming-orders li {
+    margin-bottom: 6px;
+    font-size: 0.95em;
+    color: var(--text-dark);
+}
+#incoming-orders li span { /* Price per item style */
+     color: var(--text-light);
+     font-size: 0.9em;
+     margin-left: 5px;
+}
+
+#incoming-orders .order-total {
+    font-weight: 700; /* Bolder total */
+    text-align: right;
+    margin-top: 15px;
+    font-size: 1.2em;
+    color: var(--success-dark); /* Green total */
+    border-top: 1px dashed var(--border-color);
+    padding-top: 10px;
+}
+
+/* --- Responsive Adjustments (Example) --- */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+        gap: 20px;
+    }
+    .view {
+        min-width: 90%; /* Allow views to take more width */
+        padding: 20px;
+    }
+    .app-header {
+        padding: 10px 15px;
+        flex-direction: column; /* Stack header elements */
+        align-items: flex-start;
+    }
+    .app-header h1 {
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+    }
+    #user-info {
+        margin-top: 5px;
+        width: 100%;
+        justify-content: space-between; /* Space out user info/logout */
+    }
+    #user-info em {
+        margin-right: 5px;
+    }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.2rem; }
+}
+
+@media (max-width: 480px) {
+     .login-container {
+         margin: 30px 15px;
+         padding: 25px;
+     }
+     .view {
+        padding: 15px;
+     }
+     .menu li, .order-summary li {
+        flex-direction: column; /* Stack item details on small screens */
+        align-items: flex-start;
+     }
+     .menu li div, .order-summary li div { /* Group price/button */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 8px;
+     }
+     .menu button, .remove-item-btn {
+         margin-left: 10px;
+     }
+     .item-price {
+         text-align: left;
+         min-width: auto;
+     }
+     .total {
+         font-size: 1.2em;
+     }
+     #submit-order-btn {
+         font-size: 1em;
+         padding: 10px 15px;
+     }
+     #incoming-orders .order h4 {
+         flex-direction: column;
+         align-items: flex-start;
+     }
+      #incoming-orders .order-time {
+         margin-left: 0;
+         margin-top: 4px;
+     }
+}
