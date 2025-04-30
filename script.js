@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration ---
-    const menuData = [ // Keep the menu data with descriptions and initial stock
+    const menuData = [ // Keep the menu data with descriptions and stock
         { id: 'm1', name: 'Paneer Butter Masala', price: 280.00, description: 'Creamy tomato gravy with soft paneer cubes.', stock: 15 },
         { id: 'm2', name: 'Chicken Tikka Masala', price: 350.00, description: 'Grilled chicken chunks in a spiced curry sauce.', stock: 20 },
         { id: 'm3', name: 'Dal Makhani', price: 220.50, description: 'Rich, slow-cooked black lentils with butter and cream.', stock: 18 },
@@ -65,22 +65,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const incomingOrdersDiv = document.getElementById('incoming-orders');
     const clearAllOrdersBtn = document.getElementById('clear-all-orders-btn');
     const notificationArea = document.getElementById('item-added-notification');
-    // *** Optional: Add a Reset Stock Button reference if you add it in HTML ***
-    // const resetStockButton = document.getElementById('reset-stock-btn');
+
+    // *** NEW: Inventory Management DOM Elements ***
+    const inventoryItemsListUl = document.getElementById('inventory-items-list');
+    const saveStockButton = document.getElementById('save-stock-btn');
+    const resetStockButton = document.getElementById('reset-stock-btn');
 
 
     // --- Functions ---
 
-    // (Keep loadOrders, saveOrders, getItemById, formatCurrency, formatOrderId, getNextOrderId, updateMenuQuantityDisplay, addItemFromMenu, removeItemFromMenu, displayCart, submitOrder, showOrderConfirmation, hideOrderConfirmation, showNotification, hideNotification, updateOrderStatus, displayOrders, clearAllOrders, handleLogin, handleLogout, showLoggedInState, showLoginState)
-    // ... (all existing functions remain here) ...
-
-    // Load orders from Local Storage
+    // Load orders from Local Storage (Remains the same)
     function loadOrders() {
         const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
         try { const orders = storedOrders ? JSON.parse(storedOrders) : []; return orders.map(order => { if (typeof order.preparationStatus === 'undefined') order.preparationStatus = 'Pending'; if (typeof order.paymentStatus === 'undefined') order.paymentStatus = 'Pending'; order.id = (typeof order.id === 'string' && order.id.startsWith('ORD-')) ? 0 : parseInt(order.id, 10) || 0; return order; }).filter(order => order.id >= 0); } catch (e) { console.error("Error loading orders:", e); return []; }
     }
+    // Save orders to Local Storage (Remains the same)
     function saveOrders() { localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(allOrders)); }
-    // Load Stock from Local Storage
+    // Load Stock from Local Storage (Remains the same, uses initial stock from menuData as fallback)
     function loadStock() {
         const storedStock = localStorage.getItem(STOCK_STORAGE_KEY);
         try {
@@ -94,27 +95,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) { console.error("Error loading stock:", e); const initialStock = {}; menuData.forEach(item => { initialStock[item.id] = item.stock; }); return initialStock; }
     }
+    // Save Stock to Local Storage (Remains the same)
     function saveStock() { localStorage.setItem(STOCK_STORAGE_KEY, JSON.stringify(currentStockLevels)); }
+
+     // Reset Stock to initial menuData levels (Remains the same)
      function resetStock() {
          if (confirm("Are you sure you want to reset ALL stock levels to initial values?")) {
-             currentStockLevels = {};
-             menuData.forEach(item => { currentStockLevels[item.id] = item.stock; });
-             saveStock();
-             displayMenu();
+             currentStockLevels = {}; // Clear current state
+             menuData.forEach(item => { currentStockLevels[item.id] = item.stock; }); // Populate from initial data
+             saveStock(); // Save the reset stock
+
+             // Update displays that show stock
+             displayMenu(); // Updates customer view (availability) and employee menu view (stock number)
+             displayInventoryForEmployee(); // Updates the inventory list in the employee view
+             displayCart(); // Check cart against reset stock (optional but safer)
+
              console.log("Stock levels reset.");
          }
      }
+
+
+    // Find item details by ID (Remains the same)
     function getItemById(itemId) { return menuData.find(item => item.id === itemId); }
+    // Format currency (Remains the same)
     function formatCurrency(amount) { return `${CURRENCY_SYMBOL}${amount.toFixed(2)}`; }
+    // Format Order ID to 3 digits (Remains the same)
     function formatOrderId(numericId) { return String(numericId).padStart(3, '0'); }
+    // Get the next sequential order ID (Remains the same, relies on loadOrders)
     function getNextOrderId() {
         if (allOrders.length === 0) return 1;
         const ordersFromStorage = loadOrders();
         const maxId = ordersFromStorage.reduce((max, order) => { const currentId = Number(order.id); return currentId > max ? currentId : max; }, 0);
         return maxId + 1;
     }
+
+    // Update the quantity displayed on the menu item (Remains the same)
     function updateMenuQuantityDisplay(itemId, newQuantity) {
-        const listItem = menuItemsUl.querySelector(`li div[data-item-id="${itemId}"]`)?.closest('li'); // Find the list item using the control div's data attribute
+        const listItem = menuItemsUl?.querySelector(`li .item-quantity-control[data-item-id="${itemId}"]`)?.closest('li');
         if (!listItem) return;
         const qtySpan = listItem.querySelector('.current-qty');
         if (qtySpan) {
@@ -128,14 +145,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (increaseBtn && item) { increaseBtn.disabled = (newQuantity >= currentStock); }
         if (decreaseBtn) { decreaseBtn.disabled = (newQuantity <= 0); }
     }
+
+    // Handle adding one item from the menu (Remains the same)
     function addItemFromMenu(itemId) {
-        const item = getItemById(itemId);
-        if (!item) { console.error(`Attempted to add unknown item ID: ${itemId}`); showNotification("Error: Item not found.", 'danger'); return; }
+        const item = getItemById(itemId); if (!item) { console.error(`Unknown item ID: ${itemId}`); showNotification("Error: Item not found.", 'danger'); return; }
         const currentStock = currentStockLevels[itemId] || 0;
         const currentQuantityInCart = currentCart[itemId] || 0;
-        if (currentQuantityInCart + 1 > currentStock) { console.warn(`Cannot add more ${item.name}. Stock limit reached.`); showNotification(`Cannot add more ${item.name}. Out of stock.`, 'warning'); return; }
-        currentCart[itemId] = currentQuantityInCart + 1; displayCart(); updateMenuQuantityDisplay(itemId, currentCart[itemId]); hideOrderConfirmation(); showNotification(`${item.name} added to order!`, 'success');
+        if (currentQuantityInCart + 1 > currentStock) { showNotification(`Cannot add more ${item.name}. Out of stock.`, 'warning'); return; }
+        currentCart[itemId] = currentQuantityInCart + 1;
+        displayCart(); updateMenuQuantityDisplay(itemId, currentCart[itemId]); hideOrderConfirmation(); showNotification(`${item.name} added to order!`, 'success');
     }
+
+    // Handle removing one item from the menu control (Remains the same)
     function removeItemFromMenu(itemId) {
         const currentQuantityInCart = currentCart[itemId] || 0;
         if (currentQuantityInCart > 0) {
@@ -144,6 +165,72 @@ document.addEventListener('DOMContentLoaded', () => {
              displayCart(); updateMenuQuantityDisplay(itemId, currentCart[itemId] || 0); hideOrderConfirmation();
         }
     }
+
+    // Display Menu Items - MODIFIED slightly for employee stock display logic
+    function displayMenu() {
+        if (!menuItemsUl) return;
+        menuItemsUl.innerHTML = '';
+        menuData.forEach(item => {
+            const li = document.createElement('li'); const itemId = item.id;
+            const currentStock = currentStockLevels[itemId] || 0;
+            const quantityInCart = currentCart[itemId] || 0; // Needed for customer view quantity control
+
+            if (currentStock <= 0 && currentUserRole === 'customer') {
+                li.classList.add('out-of-stock');
+            }
+
+            const itemDetailsDiv = document.createElement('div');
+            itemDetailsDiv.classList.add('menu-item-details');
+            itemDetailsDiv.innerHTML = `<span class="item-name">${item.name}</span>${item.description ? `<p class="item-description">${item.description}</p>` : ''}`;
+
+            const itemActionDiv = document.createElement('div');
+            itemActionDiv.classList.add('menu-item-action');
+
+            if (currentUserRole === 'customer') {
+                 itemActionDiv.innerHTML = `
+                    <span class="item-price">${formatCurrency(item.price)}</span>
+                    ${currentStock > 0 ?
+                        `<div class="item-quantity-control" data-item-id="${itemId}">
+                            <button class="decrease-qty">-</button>
+                            <span class="current-qty">${quantityInCart}</span>
+                            <button class="increase-qty">+</button>
+                         </div>` :
+                        `<span class="out-of-stock-message">Out of Stock</span>`
+                    }
+                 `;
+                 const decreaseButton = itemActionDiv.querySelector('.decrease-qty');
+                 const increaseButton = itemActionDiv.querySelector('.increase-qty');
+                 if (decreaseButton) {
+                     decreaseButton.addEventListener('click', () => removeItemFromMenu(itemId));
+                     decreaseButton.disabled = (quantityInCart <= 0);
+                 }
+                 if (increaseButton) {
+                     increaseButton.addEventListener('click', () => addItemFromMenu(itemId));
+                     increaseButton.disabled = (quantityInCart >= currentStock);
+                 }
+
+            } else if (currentUserRole === 'employee') {
+                // Employee view: Show price and stock level
+                itemActionDiv.innerHTML = `
+                    <span class="item-price">${formatCurrency(item.price)}</span>
+                    <span class="item-stock">Stock: ${currentStock}</span>
+                `;
+            }
+
+            li.appendChild(itemDetailsDiv); li.appendChild(itemActionDiv); menuItemsUl.appendChild(li);
+        });
+    }
+
+    // removeFromCart (Remains the same, updates cart and menu item quantity)
+    function removeFromCart(itemId) {
+        if (currentCart[itemId] > 0) {
+             currentCart[itemId]--;
+             if (currentCart[itemId] === 0) { delete currentCart[itemId]; }
+             displayCart();
+             updateMenuQuantityDisplay(itemId, currentCart[itemId] || 0);
+        }
+    }
+    // displayCart (Remains the same, updates only cart summary)
     function displayCart() {
         cartItemsUl.innerHTML = ''; let total = 0; let itemCount = 0;
         Object.entries(currentCart).forEach(([itemId, quantity]) => {
@@ -152,43 +239,66 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (item) {
                     const itemTotal = item.price * quantity; const li = document.createElement('li');
                     li.innerHTML = `<div class="cart-item-details"><span class="cart-item-quantity">${quantity}x</span><span class="item-name">${item.name}</span></div><div><span class="item-price">${formatCurrency(itemTotal)}</span><button class="remove-item-btn" data-item-id="${itemId}">-</button></div>`;
-                    li.querySelector('.remove-item-btn').addEventListener('click', () => removeItemFromCart(itemId)); cartItemsUl.appendChild(li); total += itemTotal;
+                    li.querySelector('.remove-item-btn').addEventListener('click', () => removeFromCart(itemId)); cartItemsUl.appendChild(li); total += itemTotal;
                 } else { console.warn(`Item ${itemId} not found.`); delete currentCart[itemId]; }
             }
         });
         emptyCartMessage.style.display = (itemCount === 0) ? 'flex' : 'none'; cartTotalSpan.textContent = total.toFixed(2); submitOrderBtn.disabled = itemCount === 0;
     }
+
+    // submitOrder (Remains the same, updates stock and then refreshes displays)
     function submitOrder() {
         if (Object.keys(currentCart).length === 0) return;
         const orderItems = Object.entries(currentCart).map(([itemId, quantity]) => { const item = getItemById(itemId); if (!item) { console.error(`Item ${itemId} not found.`); return null; } return { id: itemId, name: item.name, quantity: quantity, price: item.price }; }).filter(item => item !== null);
         if (orderItems.length === 0) { alert("Error: Could not find items in cart."); displayCart(); return; }
-        let stockError = false; const latestStock = loadStock();
-        orderItems.forEach(item => { const currentStock = latestStock[item.id] || 0; if (item.quantity > currentStock) { console.error(`Stock Error: Tried to order ${item.quantity} of ${item.name} but only ${currentStock} available.`); stockError = true; } });
+        let stockError = false; const latestStock = loadStock(); orderItems.forEach(item => { const currentStock = latestStock[item.id] || 0; if (item.quantity > currentStock) { console.error(`Stock Error: Ordered ${item.quantity} of ${item.name}, only ${currentStock} avail.`); stockError = true; } });
         if(stockError) { alert("Cannot submit order. Some items are now out of stock. Please review your cart."); currentCart = {}; displayCart(); displayMenu(); return; }
-        const orderTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0); const nextOrderId = getNextOrderId();
+
+        const orderTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const nextOrderId = getNextOrderId();
         const newOrder = { id: nextOrderId, timestamp: new Date().toISOString(), customerName: currentUserName || 'Walk-in Customer', items: orderItems, total: orderTotal, preparationStatus: 'Pending', paymentStatus: 'Pending' };
-        orderItems.forEach(item => { currentStockLevels[item.id] = Math.max(0, (currentStockLevels[item.id] || 0) - item.quantity); }); saveStock();
-        allOrders.push(newOrder); saveOrders();
-        displayOrders(); displayMenu(); currentCart = {}; displayCart();
-        showOrderConfirmation(`Order #${formatOrderId(newOrder.id)} submitted successfully!`); hideNotification();
+
+        orderItems.forEach(item => { currentStockLevels[item.id] = Math.max(0, (currentStockLevels[item.id] || 0) - item.quantity); });
+        saveStock();
+
+        allOrders.push(newOrder); saveOrders(); displayOrders();
+        displayMenu(); // Update menu availability and employee stock counts
+        // Note: displayInventoryForEmployee will be updated via storage event in other tabs
+
+        currentCart = {}; displayCart(); showOrderConfirmation(`Order #${formatOrderId(newOrder.id)} submitted successfully!`); hideNotification();
     }
+
+    // showOrderConfirmation (Remains the same)
     function showOrderConfirmation(message) { orderConfirmationP.textContent = message; orderConfirmationP.style.display = 'block'; setTimeout(hideOrderConfirmation, 4000); }
+    // hideOrderConfirmation (Remains the same)
     function hideOrderConfirmation() { orderConfirmationP.style.display = 'none'; }
+
+    // showNotification (Remains the same, includes type)
     function showNotification(message, type = 'info') {
         if (notificationTimeoutId) { clearTimeout(notificationTimeoutId); }
         notificationArea.textContent = message; notificationArea.className = 'notification'; notificationArea.classList.add(type); notificationArea.classList.add('show');
         notificationTimeoutId = setTimeout(() => { hideNotification(); }, 2500);
     }
+    // hideNotification (Remains the same, clears type)
     function hideNotification() {
         notificationArea.classList.remove('show');
         setTimeout(() => { notificationArea.textContent = ''; notificationArea.classList.remove('success', 'warning', 'danger', 'info'); notificationTimeoutId = null; }, 300);
     }
+
+    // updateOrderStatus (Remains the same, updates order status)
     function updateOrderStatus(orderId, statusType, newValue) {
         allOrders = loadOrders(); const orderIndex = allOrders.findIndex(order => order.id === orderId);
-        if (orderIndex > -1) { allOrders[orderIndex][statusType + 'Status'] = newValue; saveOrders(); displayOrders(); console.log(`Order #${formatOrderId(orderId)} ${statusType} status updated to: ${newValue}`); } else { console.error(`Order with ID ${orderId} not found for status update.`); }
+        if (orderIndex > -1) {
+            allOrders[orderIndex][statusType + 'Status'] = newValue;
+            saveOrders(); displayOrders();
+            console.log(`Order #${formatOrderId(orderId)} ${statusType} status updated to: ${newValue}`);
+        } else { console.error(`Order ${orderId} not found.`); }
     }
+
+    // Display Incoming Orders (Employee View) (Remains the same)
     function displayOrders() {
-         if (!employeeView || !incomingOrdersDiv) return; incomingOrdersDiv.innerHTML = ''; const ordersToDisplay = loadOrders();
+         if (!employeeView || !incomingOrdersDiv) return;
+         incomingOrdersDiv.innerHTML = ''; const ordersToDisplay = loadOrders();
         if (ordersToDisplay.length === 0) { incomingOrdersDiv.innerHTML = '<p>No orders yet.</p>'; return; }
          [...ordersToDisplay].reverse().forEach(order => {
             const orderDiv = document.createElement('div'); orderDiv.classList.add('order');
@@ -217,7 +327,104 @@ document.addEventListener('DOMContentLoaded', () => {
             incomingOrdersDiv.appendChild(orderDiv);
         });
     }
+
+    // clearAllOrders (Remains the same)
     function clearAllOrders() { if (confirm("Clear ALL orders? This will not reset stock.")) { allOrders = []; saveOrders(); displayOrders(); } }
+
+
+    // *** NEW: Display Inventory Items for Employee ***
+    function displayInventoryForEmployee() {
+        if (!inventoryItemsListUl) return; // Ensure element exists
+
+        inventoryItemsListUl.innerHTML = ''; // Clear existing items
+
+        // Sort items alphabetically by name for easier management
+        const sortedMenuItems = [...menuData].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedMenuItems.forEach(item => {
+            const itemId = item.id;
+            const currentStock = currentStockLevels[itemId] || 0; // Get current stock, default to 0
+
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span class="item-name">${item.name}</span>
+                <div class="stock-input-group">
+                    <label for="stock-${itemId}">Current:</label>
+                    <span class="current-stock-display">${currentStock}</span>
+                    <label for="stock-input-${itemId}">Set New:</label>
+                    <input type="number" id="stock-input-${itemId}" data-item-id="${itemId}" value="${currentStock}" min="0">
+                </div>
+            `;
+
+            // Optional: Add input listener if you want real-time feedback (less common for 'Save All')
+            // const stockInput = li.querySelector(`#stock-input-${itemId}`);
+            // if (stockInput) {
+            //      stockInput.addEventListener('input', (event) => {
+            //          // Handle potential non-numeric input or negative values
+            //          let newValue = parseInt(event.target.value, 10);
+            //          if (isNaN(newValue) || newValue < 0) {
+            //              newValue = 0; // Or revert to previous value, or show error
+            //              event.target.value = newValue;
+            //          }
+            //          // You could update a temporary object here if needed
+            //          // console.log(`Input changed for ${item.name} to ${newValue}`);
+            //      });
+            // }
+
+
+            inventoryItemsListUl.appendChild(li);
+        });
+         // Optional: Show a message if no menu items
+         if (sortedMenuItems.length === 0) {
+            inventoryItemsListUl.innerHTML = '<li>No menu items configured.</li>';
+         }
+    }
+
+    // *** NEW: Function to Save all inventory input changes ***
+    function saveInventoryChanges() {
+        if (!inventoryItemsListUl) return;
+
+        // Get all the number input fields in the inventory list
+        const stockInputs = inventoryItemsListUl.querySelectorAll('input[type="number"][data-item-id]');
+
+        if (stockInputs.length === 0) {
+             showNotification("No inventory items to save.", 'info');
+             return;
+        }
+
+        // Create a temporary object to hold the new stock levels
+        const updatedStock = { ...currentStockLevels }; // Start with current levels
+
+        stockInputs.forEach(input => {
+            const itemId = input.dataset.itemId;
+            let newValue = parseInt(input.value, 10); // Parse the input value as an integer
+
+            // Basic validation
+            if (isNaN(newValue) || newValue < 0) {
+                newValue = 0; // Default to 0 for invalid input
+                input.value = 0; // Correct the input field visually
+                 console.warn(`Invalid stock entered for item ${itemId}. Setting to 0.`);
+                 showNotification(`Invalid stock entered for an item. Set to 0.`, 'warning'); // Notify user
+            }
+
+            // Update the temporary stock object
+            updatedStock[itemId] = newValue;
+        });
+
+        // Update the main stock state and save
+        currentStockLevels = updatedStock;
+        saveStock(); // Save the changes to localStorage
+
+        // Refresh relevant displays
+        displayMenu(); // Updates customer view (availability) and employee menu view (stock number)
+        displayInventoryForEmployee(); // Re-renders the inventory list with updated values
+
+        showNotification("Stock levels saved successfully!", 'success');
+        console.log("Stock levels saved:", currentStockLevels);
+    }
+
+
+    // --- Login/Logout Logic --- (Modified to display/hide inventory)
     function handleLogin() {
         const name = nameInput.value.trim(); const selectedRole = document.querySelector('input[name="role"]:checked').value; loginErrorP.textContent = '';
         if (!name) { loginErrorP.textContent = 'Please enter your name.'; nameInput.focus(); return; }
@@ -234,226 +441,113 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem(USER_NAME_KEY); sessionStorage.removeItem(USER_ROLE_KEY);
         currentUserName = null; currentUserRole = null; currentCart = {};
         displayCart();
-        if(customerView && customerView.style.display !== 'none') { displayMenu(); }
+        if(customerView && customerView.style.display !== 'none') { displayMenu(); } // Refresh menu to clear quantities
+         // Clear inventory display on logout
+        if (inventoryItemsListUl) inventoryItemsListUl.innerHTML = '<li>Loading Inventory...</li>';
         showLoginState();
-         if (customerView) customerView.style.display = 'none';
+        if (customerView) customerView.style.display = 'none';
         if (employeeView) employeeView.style.display = 'none';
     }
     function showLoggedInState() {
         loginView.style.display = 'none'; appContainer.style.display = 'block';
         loggedInUserNameSpan.textContent = currentUserName; loggedInUserRoleSpan.textContent = currentUserRole;
-        customerView.style.display = 'none'; employeeView.style.display = 'none';
+
+        // Hide all views first
+        customerView.style.display = 'none';
+        employeeView.style.display = 'none';
+
+        // Remove old listeners before adding new ones
         if (submitOrderBtn) submitOrderBtn.removeEventListener('click', submitOrder);
         if (clearAllOrdersBtn) clearAllOrdersBtn.removeEventListener('click', clearAllOrders);
+        if (saveStockButton) saveStockButton.removeEventListener('click', saveInventoryChanges); // *** Remove listener ***
+        if (resetStockButton) resetStockButton.removeEventListener('click', resetStock); // *** Remove listener ***
         if (logoutButton) logoutButton.removeEventListener('click', handleLogout);
-        // if (resetStockButton) resetStockButton.removeEventListener('click', resetStock); // Remove if you add the button
 
+        // Show the correct view and attach listeners
         if (currentUserRole === 'customer') {
             customerView.style.display = 'block';
-            displayMenu(); // Display menu with quantity controls
+            displayMenu(); // Display menu with quantity controls for customers
             displayCart(); hideOrderConfirmation();
             if (submitOrderBtn) submitOrderBtn.addEventListener('click', submitOrder);
         } else if (currentUserRole === 'employee') {
             employeeView.style.display = 'block';
-            displayOrders();
-            displayMenu(); // Display menu with stock editing inputs
+            displayOrders(); // Display orders
+            displayMenu(); // Display menu with stock levels for employees
+            displayInventoryForEmployee(); // *** NEW: Display inventory for employees ***
+
+            // *** Attach NEW listeners for employee buttons ***
             if (clearAllOrdersBtn) clearAllOrdersBtn.addEventListener('click', clearAllOrders);
-            // if (resetStockButton) resetStockButton.addEventListener('click', resetStock); // Add listener if you add the button
+            if (saveStockButton) saveStockButton.addEventListener('click', saveInventoryChanges); // *** Attach listener ***
+            if (resetStockButton) resetStockButton.addEventListener('click', resetStock); // *** Attach listener ***
         }
+
+        // Always attach logout listener when logged in
         if (logoutButton) logoutButton.addEventListener('click', handleLogout);
     }
      function showLoginState() {
         loginView.style.display = 'block'; appContainer.style.display = 'none';
         customerView.style.display = 'none'; employeeView.style.display = 'none';
         if (nameInput) nameInput.value = ''; if (roleCustomerRadio) roleCustomerRadio.checked = true; if (loginErrorP) loginErrorP.textContent = '';
+        // Clean up displays when logging out/showing login
+        if (menuItemsUl) menuItemsUl.innerHTML = '<li>Loading menu...</li>'; // Clear menu display
+        if (cartItemsUl) cartItemsUl.innerHTML = '<li id="empty-cart-message">Your cart is empty.</li>'; // Clear cart display
+        if (incomingOrdersDiv) incomingOrdersDiv.innerHTML = '<p>No orders yet.</p>'; // Clear orders display
+         if (inventoryItemsListUl) inventoryItemsListUl.innerHTML = '<li>Loading Inventory...</li>'; // Clear inventory display
+
+         // Remove all listeners when logging out
         if (submitOrderBtn) submitOrderBtn.removeEventListener('click', submitOrder);
         if (clearAllOrdersBtn) clearAllOrdersBtn.removeEventListener('click', clearAllOrders);
+        if (saveStockButton) saveStockButton.removeEventListener('click', saveInventoryChanges); // *** Remove listener ***
+        if (resetStockButton) resetStockButton.removeEventListener('click', resetStock); // *** Remove listener ***
         if (logoutButton) logoutButton.removeEventListener('click', handleLogout);
-        // if (resetStockButton) resetStockButton.removeEventListener('click', resetStock); // Remove if you add the button
         if (loginButton) loginButton.removeEventListener('click', handleLogin);
+
+         // Ensure login button listener is attached
         if (loginButton) loginButton.addEventListener('click', handleLogin);
     }
 
-    // *** NEW: Function to handle stock input changes by employee ***
-    function updateStockFromInput(itemId, inputElement) {
-        const rawValue = inputElement.value;
-        const newStock = parseInt(rawValue, 10); // Parse the input value as an integer
-
-        // *** Validation ***
-        // Check if the parsed value is a valid number and non-negative
-        if (isNaN(newStock) || newStock < 0) {
-            console.warn(`Invalid stock value entered for item ${itemId}: "${rawValue}". Reverting to previous stock.`);
-            // Revert the input field to the current valid stock level
-            inputElement.value = currentStockLevels[itemId] || 0;
-            showNotification("Invalid stock value. Please enter a non-negative number.", 'warning');
-            return; // Stop the update process
-        }
-         // Optional: Check for fractional numbers if your stock isn't integer (unlikely for food items)
-         if (newStock !== parseFloat(rawValue)) {
-             console.warn(`Fractional stock value entered for item ${itemId}: "${rawValue}". Using integer part.`);
-              // Input field will likely already show the integer due to type="number" and parsing,
-              // but can explicitly set inputElement.value = newStock; if needed
-              showNotification("Fractional stock value entered. Using whole number.", 'info');
-         }
-        // *** End Validation ***
-
-
-        // Only update and save if the stock level has actually changed
-        if (currentStockLevels[itemId] !== newStock) {
-            console.log(`Updating stock for item ${itemId} to ${newStock}`);
-            currentStockLevels[itemId] = newStock; // Update state
-            saveStock(); // Save to localStorage
-
-            // Notify other tabs / update customer view
-            // Saving triggers the storage event, which will call loadStock + displayMenu everywhere.
-            // We don't need to call displayMenu() again in THIS tab immediately, as the input value is already correct.
-             showNotification(`Stock for ${getItemById(itemId)?.name || 'Item'} updated to ${newStock}.`, 'success');
-        } else {
-             console.log(`Stock for item ${itemId} unchanged.`);
-        }
-    }
-
-
-    // Display Menu Items - MODIFIED for Quantity Control (Customer) / Stock Input (Employee)
-    function displayMenu() {
-        if (!menuItemsUl) return;
-
-        menuItemsUl.innerHTML = ''; // Clear existing items
-        menuData.forEach(item => {
-            const li = document.createElement('li');
-            const itemId = item.id;
-            const currentStock = currentStockLevels[itemId] || 0;
-            const quantityInCart = currentCart[itemId] || 0;
-
-            // Add 'out-of-stock' class for Customer view only if stock is zero
-            if (currentStock <= 0 && currentUserRole === 'customer') {
-                li.classList.add('out-of-stock');
-            }
-
-            const itemDetailsDiv = document.createElement('div');
-            itemDetailsDiv.classList.add('menu-item-details');
-            itemDetailsDiv.innerHTML = `
-                <span class="item-name">${item.name}</span>
-                ${item.description ? `<p class="item-description">${item.description}</p>` : ''}
-            `;
-
-            const itemActionDiv = document.createElement('div');
-            itemActionDiv.classList.add('menu-item-action'); // Use this class for both roles
-
-            if (currentUserRole === 'customer') {
-                 // Customer View: Quantity Control or Out of Stock
-                 itemActionDiv.innerHTML = `
-                    <span class="item-price">${formatCurrency(item.price)}</span>
-                    ${currentStock > 0 ?
-                        `<div class="item-quantity-control" data-item-id="${itemId}">
-                            <button class="decrease-qty">-</button>
-                            <span class="current-qty">${quantityInCart}</span>
-                            <button class="increase-qty">+</button>
-                         </div>` :
-                        `<span class="out-of-stock-message">Out of Stock</span>`
-                    }
-                 `;
-
-                 const decreaseButton = itemActionDiv.querySelector('.decrease-qty');
-                 const increaseButton = itemActionDiv.querySelector('.increase-qty');
-
-                 if (decreaseButton) {
-                     decreaseButton.addEventListener('click', () => removeItemFromMenu(itemId));
-                     decreaseButton.disabled = (quantityInCart <= 0);
-                 }
-                 if (increaseButton) {
-                     increaseButton.addEventListener('click', () => addItemFromMenu(itemId));
-                     increaseButton.disabled = (quantityInCart >= currentStock);
-                 }
-
-            } else if (currentUserRole === 'employee') {
-                // Employee View: Price and Stock Editor
-                itemActionDiv.innerHTML = `
-                    <span class="item-price">${formatCurrency(item.price)}</span>
-                    <div class="item-stock-editor">
-                        <label>Stock:</label>
-                        <input type="number" min="0" value="${currentStock}" data-item-id="${itemId}">
-                    </div>
-                `;
-                 // *** Attach event listener to the stock input ***
-                const stockInput = itemActionDiv.querySelector('input[type="number"]');
-                 if (stockInput) {
-                     // Use 'change' event to trigger update when input loses focus or Enter is pressed
-                     stockInput.addEventListener('change', (event) => {
-                         const itemId = event.target.dataset.itemId; // Get the item ID from data attribute
-                         updateStockFromInput(itemId, event.target); // Pass item ID and the input element
-                     });
-                 }
-            }
-
-            li.appendChild(itemDetailsDiv);
-            li.appendChild(itemActionDiv);
-            menuItemsUl.appendChild(li);
-        });
-    }
-
-    // (Rest of the functions remain unchanged as they rely on the state variables and helper functions)
-    // removeFromCart remains the same
-    // displayCart remains the same
-    // submitOrder remains the same
-    // showOrderConfirmation remains the same
-    // hideOrderConfirmation remains the same
-    // showNotification remains the same
-    // hideNotification remains the same
-    // updateOrderStatus remains the same
-    // displayOrders remains the same
-    // clearAllOrders remains the same
-    // handleLogin remains the same
-    // handleLogout remains the same
-    // showLoggedInState remains the same
-    // showLoginState remains the same
-
 
     // --- Event Listeners ---
-    // Storage Listener - MODIFIED to handle stock changes, reload stock, and update menu/cart
+    // Storage Listener - MODIFIED to update inventory display as well
     window.addEventListener('storage', (event) => {
         // console.log('Storage event:', event.key); // Debugging
 
-        // Handle Orders changes (primarily for employee display)
         if (event.key === ORDERS_STORAGE_KEY && currentUserRole === 'employee') {
             console.log("Orders updated in another tab. Refreshing employee order view...");
-            displayOrders(); // displayOrders calls loadOrders itself
+            displayOrders();
         }
 
-         // Handle Stock changes from other tabs
-        if (event.key === STOCK_STORAGE_KEY) { // Listen for stock changes regardless of role
-             console.log("Stock updated in another tab. Refreshing menu and potentially cart...");
-             const oldStockLevels = {...currentStockLevels}; // Capture state before loading
+        // Handle Stock changes from other tabs
+        if (event.key === STOCK_STORAGE_KEY) {
+             console.log("Stock updated in another tab. Refreshing stock displays...");
+             const oldStockLevels = {...currentStockLevels};
              currentStockLevels = loadStock(); // Reload the latest stock data
 
-             // Only check/clear cart if customer view is active
-            if (currentUserRole === 'customer') {
-                 let cartNeedsClearing = false;
-                 Object.entries(currentCart).forEach(([itemId, quantity]) => {
-                     const item = getItemById(itemId);
-                     const stockBefore = oldStockLevels[itemId] || 0;
-                     const stockAfter = currentStockLevels[itemId] || 0;
+             let cartNeedsClearing = false;
+             Object.entries(currentCart).forEach(([itemId, quantity]) => {
+                 const item = getItemById(itemId);
+                 const stockBefore = oldStockLevels[itemId] || 0;
+                 const stockAfter = currentStockLevels[itemId] || 0;
+                 if (stockAfter < quantity && stockBefore >= quantity) {
+                      cartNeedsClearing = true;
+                 } else if (!item || (stockAfter <= 0 && quantity > 0)) {
+                      cartNeedsClearing = true;
+                 }
+             });
 
-                     if (stockAfter < quantity && stockBefore >= quantity) {
-                         console.warn(`Item ${item?.name || itemId} in cart (${quantity}) now exceeds new stock (${stockAfter}). Clearing cart.`);
-                         cartNeedsClearing = true;
-                     } else if (!item || stockAfter <= 0 && quantity > 0) {
-                          console.warn(`Item ${item?.name || itemId} in cart (${quantity}) is now unavailable. Clearing cart.`);
-                          cartNeedsClearing = true;
-                     }
-                 });
-
-                if(cartNeedsClearing) {
-                     alert("Stock levels have changed. Some items in your cart are no longer available in the requested quantity. Your cart has been cleared.");
-                     currentCart = {}; // Clear the cart
-                     displayCart(); // Update cart display
-                }
+            if(cartNeedsClearing) {
+                 alert("Stock levels have changed. Some items in your cart are no longer available in the requested quantity. Your cart has been cleared.");
+                 currentCart = {};
+                 displayCart(); // Update cart display
             }
 
-
-             // Always update the menu display regardless of cart clear, if relevant view is shown
+             // Update menu display (for customer availability and employee stock list)
              if (currentUserRole === 'customer' || currentUserRole === 'employee') {
-                 displayMenu(); // Re-render the menu to reflect new stock/availability
+                 displayMenu();
+             }
+             // *** NEW: Update inventory display if employee is logged in ***
+             if (currentUserRole === 'employee') {
+                 displayInventoryForEmployee();
              }
         }
     });
