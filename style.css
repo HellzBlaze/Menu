@@ -3,6 +3,275 @@
 
 /* --- Add these styles to style.css --- */
 
+/* Styles for the employee stock editing control */
+#customer-view .menu li .item-stock {
+     /* Keep existing styles for customer view's stock message (out of stock) */
+}
+
+#employee-view .menu li .item-action-div {
+     display: flex;
+     align-items: center;
+     gap: 10px; /* Space between price, label, and input */
+     min-width: 200px; /* Ensure enough space */
+     justify-content: flex-end;
+     flex-shrink: 0;
+     margin-left: auto;
+     /* Adjust alignment for stacking on small screens */
+     @media (max-width: 480px) {
+         min-width: auto;
+         justify-content: flex-start; /* Align left when stacked */
+         width: 100%;
+         margin-left: 0;
+         margin-top: 8px;
+         flex-wrap: wrap; /* Allow wrapping if needed */
+         gap: 5px 10px; /* Smaller gap when wrapping */
+     }
+}
+
+
+#employee-view .menu li .item-stock-editor {
+     display: flex;
+     align-items: center;
+     gap: 5px; /* Space between label and input */
+}
+
+#employee-view .menu li .item-stock-editor label {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.9em;
+    white-space: nowrap; /* Prevent label from wrapping */
+}
+
+#employee-view .menu li .item-stock-editor input[type="number"] {
+    width: 60px; /* Fixed width for the number input */
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    text-align: center; /* Center the number */
+    -moz-appearance: textfield; /* Hide default number input arrows in Firefox */
+    appearance: textfield;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hide arrows for Webkit browsers (Chrome, Safari, Edge) */
+#employee-view .menu li .item-stock-editor input[type="number"]::-webkit-outer-spin-button,
+#employee-view .menu li .item-stock-editor input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+#employee-view .menu li .item-stock-editor input[type="number"]:focus {
+     outline: none;
+     border-color: var(--primary-color);
+     box-shadow: 0 0 0 2px rgba(229, 95, 60, 0.2);
+}
+#employee-view .menu li .item-stock-editor input[type="number"]:focus-visible {
+     outline: 2px solid var(--primary-color);
+     outline-offset: 2px;
+}
+
+/* Style for out-of-stock items in employee view */
+#employee-view .menu li.out-of-stock {
+     opacity: 1; /* Don't dim employee view items just because stock is 0 */
+     font-style: normal; /* Remove italics */
+     background-color: var(--card-bg) !important; /* Reset background */
+}
+
+#employee-view .menu li.out-of-stock .item-name,
+#employee-view .menu li.out-of-stock .item-description,
+#employee-view .menu li.out-of-stock .item-price {
+    color: var(--text-dark); /* Reset text color */
+}
+
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+
+/* --- Add/Modify these styles in style.css --- */
+
+/* Ensure list items can properly contain flex items */
+.menu li, .order-summary li {
+    /* Keep existing styles... */
+    display: flex; /* Already set, but confirm */
+    justify-content: space-between; /* Already set, but confirm */
+    align-items: center; /* Changed from flex-start back to center for better vertical alignment with control */
+     /* When stacked on small screens, we'll revert to flex-start for text */
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 0;
+    transition: background-color 0.2s ease;
+}
+
+/* Menu Item Details (Name and Description) - No major changes, but ensure flex-grow */
+.menu-item-details {
+    flex-grow: 1;
+    margin-right: var(--spacing-unit);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 45px;
+    /* Align text to top on small screens */
+    @media (max-width: 480px) {
+        align-items: flex-start;
+    }
+}
+
+.item-name {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.item-description {
+    font-size: 0.9em;
+    color: var(--text-light);
+    margin-top: 5px;
+    line-height: 1.4;
+    font-weight: 400;
+}
+
+
+/* Menu Item Action (Price and Button/Control) */
+.menu-item-action {
+    display: flex;
+    align-items: center;
+    min-width: 180px; /* Increased min-width to fit price and control */
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-left: auto;
+    /* Adjust alignment for stacking on small screens */
+     @media (max-width: 480px) {
+         min-width: auto;
+         justify-content: space-between;
+         width: 100%;
+         margin-left: 0;
+         margin-top: 8px; /* Space below details */
+     }
+}
+
+.item-price {
+    min-width: 90px;
+    text-align: right;
+    color: var(--secondary-color);
+    font-weight: 600;
+    font-size: 1.05em;
+     margin-right: 15px; /* Space before quantity control */
+     /* Adjust alignment for stacking on small screens */
+     @media (max-width: 480px) {
+         text-align: left;
+         margin-right: 10px;
+         flex-grow: 1; /* Allow price to take space when stacked */
+     }
+}
+
+/* --- NEW Styles for the Quantity Control --- */
+.item-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 3px; /* Space between buttons and quantity */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden; /* Keep buttons/span within border-radius */
+    background-color: var(--light-bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Don't shrink */
+}
+
+.item-quantity-control button {
+    background-color: transparent; /* Transparent background */
+    color: var(--secondary-color); /* Color from palette */
+    padding: 6px 10px; /* Small padding */
+    font-size: 1em; /* Normal font size */
+    line-height: 1; /* Center text/symbol */
+    min-width: 30px; /* Small fixed width */
+    border: none; /* Remove button border */
+    border-radius: 0; /* Remove button radius */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    box-shadow: none; /* Remove individual button shadow */
+}
+
+.item-quantity-control button:hover:not(:disabled) {
+    background-color: rgba(var(--secondary-color), 0.1); /* Subtle hover background */
+    color: var(--secondary-dark);
+    box-shadow: none; /* Ensure no shadow */
+}
+
+.item-quantity-control button:active {
+    background-color: rgba(var(--secondary-color), 0.2); /* Darker active background */
+    transform: translateY(0); /* No vertical shift on press */
+    box-shadow: none;
+}
+
+.item-quantity-control button:disabled {
+    color: #ccc;
+    background-color: transparent;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.item-quantity-control .current-qty {
+    padding: 0 8px; /* Padding around the number */
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--primary-dark); /* Highlight quantity color */
+    min-width: 25px; /* Ensure space for quantity number */
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Style for menu items that are out of stock */
+.menu li.out-of-stock {
+    opacity: 0.7; /* Slightly dim the item */
+    font-style: italic;
+    background-color: var(--primary-light) !important; /* Light background using palette variable */
+}
+
+.menu li.out-of-stock .item-name,
+.menu li.out-of-stock .item-description,
+.menu li.out-of-stock .item-price,
+.menu li.out-of-stock .item-stock { /* Include stock display for employee */
+    color: var(--text-light); /* Dim text colors */
+}
+
+.menu li.out-of-stock .item-quantity-control {
+     display: none; /* Hide the quantity control for customers */
+}
+
+.out-of-stock-message {
+    font-size: 0.9em; /* Slightly larger */
+    color: var(--danger-color); /* Red text */
+    margin-left: 15px; /* Keep some margin */
+    font-weight: 500;
+    flex-shrink: 0;
+     /* Adjust alignment for stacking on small screens */
+     @media (max-width: 480px) {
+         margin-left: 0;
+         text-align: left;
+     }
+}
+
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+/* Adjust responsive styles if needed */
+@media (max-width: 480px) {
+    .item-stock, .out-of-stock-message {
+        margin-left: 0; /* Remove left margin when stacked */
+        margin-top: 5px; /* Add top margin */
+        text-align: left; /* Align left when stacked */
+        min-width: auto;
+    }
+    .menu li.out-of-stock .menu-item-action {
+         justify-content: flex-start; /* Align message left */
+    }
+}
+
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+
+/* --- Add these styles to style.css --- */
+
 #incoming-orders .order-statuses {
     margin-top: 10px;
     padding-top: 10px;
