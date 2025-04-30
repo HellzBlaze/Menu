@@ -82,6 +82,106 @@
 
 /* --- Add these styles to style.css --- */
 
+/* Style the container holding price and quantity controls */
+.menu-item-action {
+    /* Existing styles: display: flex, align-items: center, etc. */
+    min-width: 180px; /* Give a bit more space for the controls */
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-left: auto;
+    gap: 15px; /* Space between price and quantity controls */
+}
+
+/* Style the quantity control div */
+.item-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between button, quantity, button */
+    background-color: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 3px 5px; /* Small internal padding */
+}
+
+/* Style the +/- buttons within the quantity control */
+.item-quantity-control button {
+    background-color: transparent; /* Transparent background */
+    color: var(--secondary-color); /* Dark text color */
+    padding: 5px 8px; /* Smaller padding */
+    font-size: 1.1em; /* Make +/- larger */
+    font-weight: 600;
+    border: none; /* Remove border */
+    box-shadow: none; /* Remove shadow */
+    transition: color 0.2s ease, background-color 0.2s ease;
+    min-width: 30px; /* Ensure minimum width */
+    text-align: center;
+    line-height: 1; /* Center +/- vertically */
+}
+
+.item-quantity-control button:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover background */
+    color: var(--primary-dark); /* Change color on hover */
+}
+
+.item-quantity-control button:active {
+    transform: translateY(1px); /* Keep the press effect */
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.item-quantity-control button:disabled {
+    color: #ccc; /* Dim disabled button */
+    cursor: not-allowed;
+    background-color: transparent; /* Keep background transparent */
+    box-shadow: none;
+    opacity: 0.7;
+}
+
+
+/* Style the quantity display span */
+.item-quantity-control .quantity {
+    font-size: 1em; /* Same size as price */
+    font-weight: 600;
+    color: var(--primary-color); /* Highlight quantity color */
+    min-width: 20px; /* Ensure space for quantity */
+    text-align: center;
+}
+
+
+/* Adjust responsive styles for stacked menu items */
+@media (max-width: 480px) {
+     .menu li {
+        /* flex-direction: column, align-items: stretch already set */
+     }
+    .menu-item-details { /* Item name and description */
+        /* margin-right: 0, margin-bottom: 8px, min-height: 35px already set */
+    }
+    .menu-item-action { /* Price and quantity controls */
+        /* min-width: auto, justify-content: space-between, width: 100%, margin-left: 0 already set */
+        gap: 10px; /* Reduce gap when stacked */
+    }
+
+     .item-quantity-control {
+         gap: 4px; /* Reduce gap inside quantity control */
+         padding: 2px 4px;
+     }
+     .item-quantity-control button {
+         padding: 4px 6px;
+         font-size: 1em;
+         min-width: 25px;
+     }
+     .item-quantity-control .quantity {
+         font-size: 0.95em;
+         min-width: 18px;
+     }
+     .menu-item-action .item-price {
+        margin-right: 0; /* Remove margin when stacked below price */
+        text-align: left; /* Keep text align left as before */
+        flex-grow: 1; /* Allow price to take space */
+     }
+}
+
+/* --- Add these styles to style.css --- */
+
 .notification {
     position: fixed; /* Stay in place relative to the viewport */
     top: 20px; /* 20px from the top */
