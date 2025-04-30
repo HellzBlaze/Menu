@@ -23,20 +23,25 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'm20', name: 'Mineral Water Bottle', price: 40.00, description: 'Standard packaged drinking water (500ml/1L).' },
     ];
 
-    const ORDERS_STORAGE_KEY = 'restaurantOrdersINR_v2';
+    const ORDERS_STORAGE_KEY = 'restaurantOrdersINR_v3'; // Changed key again
     const USER_NAME_KEY = 'restaurantUserName';
     const USER_ROLE_KEY = 'restaurantUserRole';
     const CURRENCY_SYMBOL = '₹';
-    const EMPLOYEE_ACCESS_CODE = '2724'; // The required code
+    const EMPLOYEE_ACCESS_CODE = '2724';
+
+    // --- Status Definitions ---
+    const PREPARATION_STATUSES = ['Pending', 'In Progress', 'Ready'];
+    const PAYMENT_STATUSES = ['Pending', 'Paid'];
 
     // --- State ---
     let currentCart = {};
-    let allOrders = loadOrders();
+    let allOrders = loadOrders(); // Load orders on startup
     let currentUserName = sessionStorage.getItem(USER_NAME_KEY);
     let currentUserRole = sessionStorage.getItem(USER_ROLE_KEY);
+    let notificationTimeoutId = null;
 
     // --- DOM Elements ---
-    // (Keep all DOM element references as before)
+    // (Keep all existing DOM element references)
     const loginView = document.getElementById('login-view');
     const nameInput = document.getElementById('name');
     const loginButton = document.getElementById('login-btn');
@@ -57,60 +62,86 @@ document.addEventListener('DOMContentLoaded', () => {
     const employeeView = document.getElementById('employee-view');
     const incomingOrdersDiv = document.getElementById('incoming-orders');
     const clearAllOrdersBtn = document.getElementById('clear-all-orders-btn');
+    const notificationArea = document.getElementById('item-added-notification');
+
 
     // --- Functions ---
 
-    // (Keep loadOrders, saveOrders, getItemById, formatCurrency, formatOrderId, getNextOrderId, displayMenu, addToCart, removeFromCart, displayCart, submitOrder, showOrderConfirmation, hideOrderConfirmation, displayOrders, clearAllOrders)
-    // ... functions from previous steps remain unchanged here ...
-    // Load orders from Local Storage
+    // Load orders from Local Storage - MODIFIED to add default statuses
     function loadOrders() {
         const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
         try {
             const orders = storedOrders ? JSON.parse(storedOrders) : [];
-            return orders.map(order => ({
-                ...order,
-                 id: (typeof order.id === 'string' && order.id.startsWith('ORD-')) ? 0 : parseInt(order.id, 10) || 0
-             })).filter(order => order.id >= 0);
-        } catch (e) { console.error("Error loading orders:", e); localStorage.removeItem(ORDERS_STORAGE_KEY); return []; }
+            return orders.map(order => {
+                // Add default statuses if they are missing (for backward compatibility)
+                if (typeof order.preparationStatus === 'undefined') {
+                    order.preparationStatus = 'Pending';
+                }
+                 if (typeof order.paymentStatus === 'undefined') {
+                    order.paymentStatus = 'Pending';
+                }
+                 // Ensure ID is numeric (from previous change)
+                 order.id = (typeof order.id === 'string' && order.id.startsWith('ORD-')) ? 0 : parseInt(order.id, 10) || 0;
+
+                return order;
+            }).filter(order => order.id >= 0); // Filter out potentially corrupted orders
+        } catch (e) {
+            console.error("Error loading orders from local storage:", e);
+            // Clear corrupted data
+            // localStorage.removeItem(ORDERS_STORAGE_KEY); // Uncomment if you want to reset on load error
+            return []; // Return empty array on error
+        }
     }
-    // Save orders to Local Storage
-    function saveOrders() { localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(allOrders)); }
-    // Find item details by ID
+
+    // Save orders to Local Storage (No change needed, it saves the object as is)
+    function saveOrders() {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(allOrders));
+    }
+
+    // Find item details by ID (Remains the same)
     function getItemById(itemId) { return menuData.find(item => item.id === itemId); }
-    // Format currency
+    // Format currency (Remains the same)
     function formatCurrency(amount) { return `${CURRENCY_SYMBOL}${amount.toFixed(2)}`; }
-    // Format Order ID to 3 digits
+    // Format Order ID to 3 digits (Remains the same)
     function formatOrderId(numericId) { return String(numericId).padStart(3, '0'); }
-    // Get the next sequential order ID
+    // Get the next sequential order ID (Remains the same)
     function getNextOrderId() {
         if (allOrders.length === 0) return 1;
-        const maxId = allOrders.reduce((max, order) => { const currentId = Number(order.id); return currentId > max ? currentId : max; }, 0);
+        // Need to load fresh data to ensure we get the latest max ID from other tabs
+        const ordersFromStorage = loadOrders(); // Load fresh data here
+        const maxId = ordersFromStorage.reduce((max, order) => {
+             const currentId = Number(order.id);
+             return currentId > max ? currentId : max;
+            }, 0);
         return maxId + 1;
     }
-    // Display Menu Items
+
+    // displayMenu (Remains the same)
     function displayMenu() {
         menuItemsUl.innerHTML = '';
         menuData.forEach(item => {
             const li = document.createElement('li');
-            const itemDetailsDiv = document.createElement('div');
-            itemDetailsDiv.classList.add('menu-item-details');
-            itemDetailsDiv.innerHTML = `<span class="item-name">${item.name}</span>${item.description ? `<p class="item-description">${item.description}</p>` : ''}`;
-            const itemActionDiv = document.createElement('div');
-            itemActionDiv.classList.add('menu-item-action');
-            itemActionDiv.innerHTML = `<span class="item-price">${formatCurrency(item.price)}</span><button data-item-id="${item.id}">Add</button>`;
-            li.appendChild(itemDetailsDiv);
-            li.appendChild(itemActionDiv);
+            const itemDetailsDiv = document.createElement('div'); itemDetailsDiv.classList.add('menu-item-details'); itemDetailsDiv.innerHTML = `<span class="item-name">${item.name}</span>${item.description ? `<p class="item-description">${item.description}</p>` : ''}`;
+            const itemActionDiv = document.createElement('div'); itemActionDiv.classList.add('menu-item-action'); itemActionDiv.innerHTML = `<span class="item-price">${formatCurrency(item.price)}</span><button data-item-id="${item.id}">Add</button>`;
+            li.appendChild(itemDetailsDiv); li.appendChild(itemActionDiv);
             const addButton = li.querySelector('button');
-            if (currentUserRole === 'customer') { addButton.addEventListener('click', () => addToCart(item.id)); }
-            else { addButton.style.display = 'none'; }
+            if (currentUserRole === 'customer') { addButton.addEventListener('click', () => addToCart(item.id)); } else { addButton.style.display = 'none'; }
             menuItemsUl.appendChild(li);
         });
     }
-    // Add Item to Cart
-    function addToCart(itemId) { currentCart[itemId] = (currentCart[itemId] || 0) + 1; displayCart(); hideOrderConfirmation(); }
-    // Remove Item from Cart
+
+    // addToCart (Remains the same, already modified for notification)
+    function addToCart(itemId) {
+        currentCart[itemId] = (currentCart[itemId] || 0) + 1;
+        displayCart();
+        hideOrderConfirmation(); // This hides the 'Order Submitted' message
+        const item = getItemById(itemId);
+        if (item) { showNotification(`${item.name} added to order!`); }
+    }
+
+    // removeFromCart (Remains the same)
     function removeFromCart(itemId) { if (currentCart[itemId] > 0) { currentCart[itemId]--; if (currentCart[itemId] === 0) { delete currentCart[itemId]; } displayCart(); } }
-    // Display Cart Contents and Total
+    // displayCart (Remains the same)
     function displayCart() {
         cartItemsUl.innerHTML = ''; let total = 0; let itemCount = 0;
         Object.entries(currentCart).forEach(([itemId, quantity]) => {
@@ -125,139 +156,215 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         emptyCartMessage.style.display = (itemCount === 0) ? 'flex' : 'none'; cartTotalSpan.textContent = total.toFixed(2); submitOrderBtn.disabled = itemCount === 0;
     }
-    // Submit the Order
+
+    // submitOrder (Remains the same)
     function submitOrder() {
         if (Object.keys(currentCart).length === 0) return;
         const orderItems = Object.entries(currentCart).map(([itemId, quantity]) => { const item = getItemById(itemId); if (!item) { console.error(`Item ${itemId} not found.`); return null; } return { id: itemId, name: item.name, quantity: quantity, price: item.price }; }).filter(item => item !== null);
         if (orderItems.length === 0) { alert("Error: Could not find items in cart."); displayCart(); return; }
         const orderTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const nextOrderId = getNextOrderId();
-        const newOrder = { id: nextOrderId, timestamp: new Date().toISOString(), customerName: currentUserName || 'Walk-in Customer', items: orderItems, total: orderTotal };
-        allOrders.push(newOrder); saveOrders(); displayOrders(); currentCart = {}; displayCart(); showOrderConfirmation(`Order #${formatOrderId(newOrder.id)} submitted successfully!`);
+        const newOrder = {
+            id: nextOrderId,
+            timestamp: new Date().toISOString(),
+            customerName: currentUserName || 'Walk-in Customer',
+            items: orderItems,
+            total: orderTotal,
+            preparationStatus: 'Pending', // *** Set initial statuses ***
+            paymentStatus: 'Pending'
+        };
+        allOrders.push(newOrder); saveOrders(); displayOrders(); currentCart = {}; displayCart(); showOrderConfirmation(`Order #${formatOrderId(newOrder.id)} submitted successfully!`); hideNotification();
     }
-    // Show order confirmation message
+
+    // showOrderConfirmation (Remains the same)
     function showOrderConfirmation(message) { orderConfirmationP.textContent = message; orderConfirmationP.style.display = 'block'; setTimeout(hideOrderConfirmation, 4000); }
-    // Hide order confirmation message
+    // hideOrderConfirmation (Remains the same)
     function hideOrderConfirmation() { orderConfirmationP.style.display = 'none'; }
-    // Display Incoming Orders (Employee View)
-    function displayOrders() {
-        if (!employeeView || !incomingOrdersDiv) return; incomingOrdersDiv.innerHTML = ''; const ordersToDisplay = loadOrders();
-        if (ordersToDisplay.length === 0) { incomingOrdersDiv.innerHTML = '<p>No orders yet.</p>'; return; }
-        [...ordersToDisplay].reverse().forEach(order => {
-            const orderDiv = document.createElement('div'); orderDiv.classList.add('order');
-            const itemsHtml = order.items.map(item => `<li>${item.quantity}x ${item.name || '?'} <span>(${formatCurrency(item.price || 0)} each)</span></li>`).join('');
-            const orderTime = new Date(order.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }); const orderDate = new Date(order.timestamp).toLocaleDateString(); const displayId = formatOrderId(order.id);
-            orderDiv.innerHTML = `<h4><span class="order-id">Order: #${displayId}</span><span class="order-time">${orderDate} ${orderTime}</span></h4><p><strong>Customer:</strong> ${order.customerName || 'N/A'}</p><ul>${itemsHtml}</ul><p class="order-total">Total: ${formatCurrency(order.total)}</p>`;
-            incomingOrdersDiv.appendChild(orderDiv);
-        });
+
+    // showNotification (Remains the same)
+    function showNotification(message) {
+        if (notificationTimeoutId) { clearTimeout(notificationTimeoutId); }
+        notificationArea.textContent = message;
+        notificationArea.classList.add('show');
+        notificationTimeoutId = setTimeout(() => { hideNotification(); }, 2500);
     }
-    // Clear all orders
-    function clearAllOrders() { if (confirm("Clear ALL orders?")) { allOrders = []; saveOrders(); displayOrders(); } }
+    // hideNotification (Remains the same)
+    function hideNotification() {
+        notificationArea.classList.remove('show');
+        setTimeout(() => { notificationArea.textContent = ''; notificationTimeoutId = null; }, 300);
+    }
 
-    // --- Login/Logout Logic ---
+    // *** NEW: Function to update an order's status ***
+    function updateOrderStatus(orderId, statusType, newValue) {
+        // Ensure we are working with the latest data from storage
+        allOrders = loadOrders();
 
-    // handleLogin - MODIFIED
-    function handleLogin() {
-        const name = nameInput.value.trim();
-        const selectedRole = document.querySelector('input[name="role"]:checked').value;
-        loginErrorP.textContent = ''; // Clear previous errors
+        const orderIndex = allOrders.findIndex(order => order.id === orderId);
 
-        if (!name) {
-            loginErrorP.textContent = 'Please enter your name.';
-            nameInput.focus();
+        if (orderIndex > -1) {
+            // Update the specific status
+            allOrders[orderIndex][statusType + 'Status'] = newValue; // statusType will be 'preparation' or 'payment'
+
+            saveOrders(); // Save the updated list
+            displayOrders(); // Re-render the list to show the change immediately
+            console.log(`Order #${formatOrderId(orderId)} ${statusType} status updated to: ${newValue}`);
+
+             // Optional: show a notification for the employee
+             // showNotification(`Order #${formatOrderId(orderId)} status updated!`); // Might be too many notifications
+
+        } else {
+            console.error(`Order with ID ${orderId} not found for status update.`);
+        }
+    }
+
+
+    // Display Incoming Orders (Employee View) - MODIFIED to add status controls
+    function displayOrders() {
+         if (!employeeView || !incomingOrdersDiv) return;
+         incomingOrdersDiv.innerHTML = '';
+
+         // Always load latest orders when displaying
+         const ordersToDisplay = loadOrders();
+
+        if (ordersToDisplay.length === 0) {
+            incomingOrdersDiv.innerHTML = '<p>No orders yet.</p>';
             return;
         }
 
-        // *** Check if Employee role is selected and prompt for code ***
-        if (selectedRole === 'employee') {
-            const enteredCode = prompt("Employees, please enter the 4-digit access code:");
+        // Sort by oldest first for employee view (optional, but common for task lists)
+        // [...ordersToDisplay].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).forEach(order => { ... });
+        // Or keep newest first as before:
+         [...ordersToDisplay].reverse().forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.classList.add('order');
 
-            if (enteredCode === null) {
-                // User pressed Cancel on the prompt
-                loginErrorP.textContent = 'Login cancelled.';
-                return; // Stop the login process
+            const itemsHtml = order.items.map(item =>
+                 `<li>${item.quantity}x ${item.name || '?'} <span>(${formatCurrency(item.price || 0)} each)</span></li>`
+            ).join('');
+
+            const orderTime = new Date(order.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const orderDate = new Date(order.timestamp).toLocaleDateString();
+            const displayId = formatOrderId(order.id);
+
+            orderDiv.innerHTML = `
+                <h4>
+                    <span class="order-id">Order: #${displayId}</span>
+                    <span class="order-time">${orderDate} ${orderTime}</span>
+                </h4>
+                <p><strong>Customer:</strong> ${order.customerName || 'N/A'}</p>
+                <ul>${itemsHtml}</ul>
+                <p class="order-total">Total: ${formatCurrency(order.total)}</p>
+
+                <div class="order-statuses">
+                    <div class="status-group">
+                        <label for="prep-status-${order.id}">Preparation:</label>
+                        <select id="prep-status-${order.id}" data-order-id="${order.id}" data-status-type="preparation">
+                            ${PREPARATION_STATUSES.map(status =>
+                                `<option value="${status}" ${order.preparationStatus === status ? 'selected' : ''}>${status}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                     <div class="status-group">
+                        <label for="payment-status-${order.id}">Payment:</label>
+                        <select id="payment-status-${order.id}" data-order-id="${order.id}" data-status-type="payment">
+                             ${PAYMENT_STATUSES.map(status =>
+                                `<option value="${status}" ${order.paymentStatus === status ? 'selected' : ''}>${status}</option>`
+                             ).join('')}
+                        </select>
+                    </div>
+                </div> <!-- End order-statuses -->
+
+            `; // Added status controls here
+
+
+            // *** Attach event listeners to the select menus ***
+            const prepSelect = orderDiv.querySelector(`#prep-status-${order.id}`);
+            const paymentSelect = orderDiv.querySelector(`#payment-status-${order.id}`);
+
+            if(prepSelect) {
+                prepSelect.addEventListener('change', (event) => {
+                    const orderId = parseInt(event.target.dataset.orderId, 10); // Get numeric ID
+                    const newStatus = event.target.value;
+                    updateOrderStatus(orderId, 'preparation', newStatus);
+                });
             }
 
-            if (enteredCode.trim() !== EMPLOYEE_ACCESS_CODE) {
-                // Incorrect code entered
-                loginErrorP.textContent = 'Invalid access code. Please try again.';
-                return; // Stop the login process
-            }
-            // If code is correct, execution will continue below
-        }
+             if(paymentSelect) {
+                 paymentSelect.addEventListener('change', (event) => {
+                     const orderId = parseInt(event.target.dataset.orderId, 10); // Get numeric ID
+                     const newStatus = event.target.value;
+                     updateOrderStatus(orderId, 'payment', newStatus);
+                 });
+             }
 
-        // If the role is 'customer' OR if the role is 'employee' and the code was correct:
-        // Store details in sessionStorage
-        sessionStorage.setItem(USER_NAME_KEY, name);
-        sessionStorage.setItem(USER_ROLE_KEY, selectedRole);
-        currentUserName = name;
-        currentUserRole = selectedRole;
 
-        // Proceed to show the appropriate view
-        showLoggedInState();
+            incomingOrdersDiv.appendChild(orderDiv);
+        });
     }
 
-    // (Keep handleLogout, showLoggedInState, showLoginState as they were)
+    // clearAllOrders (Remains the same)
+    function clearAllOrders() { if (confirm("Clear ALL orders?")) { allOrders = []; saveOrders(); displayOrders(); } }
+
+
+    // --- Login/Logout Logic --- (Remains the same)
+    function handleLogin() {
+        const name = nameInput.value.trim();
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        loginErrorP.textContent = '';
+        if (!name) { loginErrorP.textContent = 'Please enter your name.'; nameInput.focus(); return; }
+        if (selectedRole === 'employee') {
+            const enteredCode = prompt("Employees, please enter the 4-digit access code:");
+            if (enteredCode === null) { loginErrorP.textContent = 'Login cancelled.'; return; }
+            if (enteredCode.trim() !== EMPLOYEE_ACCESS_CODE) { loginErrorP.textContent = 'Invalid access code.'; return; }
+        }
+        sessionStorage.setItem(USER_NAME_KEY, name); sessionStorage.setItem(USER_ROLE_KEY, selectedRole);
+        currentUserName = name; currentUserRole = selectedRole;
+        showLoggedInState();
+    }
     function handleLogout() {
-        sessionStorage.removeItem(USER_NAME_KEY);
-        sessionStorage.removeItem(USER_ROLE_KEY);
-        currentUserName = null;
-        currentUserRole = null;
-        currentCart = {};
+        sessionStorage.removeItem(USER_NAME_KEY); sessionStorage.removeItem(USER_ROLE_KEY);
+        currentUserName = null; currentUserRole = null; currentCart = {};
         showLoginState();
     }
     function showLoggedInState() {
-        loginView.style.display = 'none';
-        appContainer.style.display = 'block';
-        loggedInUserNameSpan.textContent = currentUserName;
-        loggedInUserRoleSpan.textContent = currentUserRole;
-        customerView.style.display = 'none';
-        employeeView.style.display = 'none';
+        loginView.style.display = 'none'; appContainer.style.display = 'block';
+        loggedInUserNameSpan.textContent = currentUserName; loggedInUserRoleSpan.textContent = currentUserRole;
+        customerView.style.display = 'none'; employeeView.style.display = 'none';
         if (submitOrderBtn) submitOrderBtn.removeEventListener('click', submitOrder);
         if (clearAllOrdersBtn) clearAllOrdersBtn.removeEventListener('click', clearAllOrders);
         if (logoutButton) logoutButton.removeEventListener('click', handleLogout);
 
         if (currentUserRole === 'customer') {
-            customerView.style.display = 'block';
-            displayMenu(); displayCart(); hideOrderConfirmation();
+            customerView.style.display = 'block'; displayMenu(); displayCart(); hideOrderConfirmation();
             if (submitOrderBtn) submitOrderBtn.addEventListener('click', submitOrder);
         } else if (currentUserRole === 'employee') {
-            employeeView.style.display = 'block';
-            displayOrders();
+            employeeView.style.display = 'block'; displayOrders(); // Display orders when employee logs in
             if (clearAllOrdersBtn) clearAllOrdersBtn.addEventListener('click', clearAllOrders);
         }
         if (logoutButton) logoutButton.addEventListener('click', handleLogout);
     }
      function showLoginState() {
-        loginView.style.display = 'block';
-        appContainer.style.display = 'none';
-        customerView.style.display = 'none';
-        employeeView.style.display = 'none';
-        if (nameInput) nameInput.value = '';
-        if (roleCustomerRadio) roleCustomerRadio.checked = true;
-        if (loginErrorP) loginErrorP.textContent = '';
+        loginView.style.display = 'block'; appContainer.style.display = 'none';
+        customerView.style.display = 'none'; employeeView.style.display = 'none';
+        if (nameInput) nameInput.value = ''; if (roleCustomerRadio) roleCustomerRadio.checked = true; if (loginErrorP) loginErrorP.textContent = '';
         if (submitOrderBtn) submitOrderBtn.removeEventListener('click', submitOrder);
         if (clearAllOrdersBtn) clearAllOrdersBtn.removeEventListener('click', clearAllOrders);
         if (logoutButton) logoutButton.removeEventListener('click', handleLogout);
-        if (loginButton) loginButton.removeEventListener('click', handleLogin); // Remove old before adding new
-        if (loginButton) loginButton.addEventListener('click', handleLogin); // Ensure listener is present
+        if (loginButton) loginButton.removeEventListener('click', handleLogin);
+        if (loginButton) loginButton.addEventListener('click', handleLogin);
     }
 
     // --- Event Listeners ---
-    // (Keep storage listener)
+    // Storage Listener - MODIFIED to reload orders data before displaying
     window.addEventListener('storage', (event) => {
         if (event.key === ORDERS_STORAGE_KEY && currentUserRole === 'employee') {
             console.log("Orders updated in another tab. Refreshing employee view...");
+            // No need to reload allOrders globally, displayOrders now calls loadOrders itself
             displayOrders();
         }
     });
 
-    // --- Initialization ---
-    // (Keep initialization logic)
-    if (currentUserName && currentUserRole) {
-        showLoggedInState();
-    } else {
-        showLoginState();
-    }
+    // --- Initialization --- (Remains the same)
+    if (currentUserName && currentUserRole) { showLoggedInState(); } else { showLoginState(); }
 
 }); // End DOMContentLoaded
