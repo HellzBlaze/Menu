@@ -3,6 +3,145 @@
 
 /* --- Add these styles to style.css --- */
 
+.section-divider {
+    border: none;
+    border-top: 2px dashed var(--border-color);
+    margin: var(--spacing-unit) 0; /* Space above and below */
+}
+
+.inventory-section h2 {
+    margin-top: 0; /* Remove extra top margin */
+    margin-bottom: calc(var(--spacing-unit) * 0.8);
+    color: var(--primary-dark); /* Use a different color */
+}
+
+.inventory-controls {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-bottom: var(--spacing-unit);
+    flex-wrap: wrap; /* Allow wrapping */
+    justify-content: center; /* Center buttons */
+}
+.inventory-controls button {
+    font-size: 0.9em;
+    padding: 8px 15px;
+}
+
+.inventory-controls .warning-button {
+     background-color: var(--warning-color);
+     color: var(--text-dark);
+}
+.inventory-controls .warning-button:hover:not(:disabled) {
+     background-color: var(--warning-dark);
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+#inventory-items-list {
+    list-style: none;
+    padding: 0;
+    max-height: 40vh; /* Limit height for scrolling */
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+    /* Inherit scrollbar style from #incoming-orders */
+}
+/* You might want separate scrollbar styles if needed */
+
+
+#inventory-items-list li {
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+#inventory-items-list li:last-child {
+    border-bottom: none;
+}
+#inventory-items-list li:hover {
+     background-color: var(--light-bg);
+}
+
+
+#inventory-items-list .item-name {
+    flex-grow: 1;
+    margin-right: 15px;
+    font-weight: 500;
+}
+
+.stock-input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between label/current/input */
+    flex-shrink: 0;
+    min-width: 150px; /* Ensure enough space */
+    justify-content: flex-end;
+}
+
+.stock-input-group label {
+    font-size: 0.9em;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.stock-input-group .current-stock-display {
+     font-weight: 600;
+     color: var(--secondary-color);
+     min-width: 25px; /* Space for number */
+     text-align: right;
+}
+
+.stock-input-group input[type="number"] {
+    width: 60px; /* Fixed width for the input */
+    padding: 5px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.95em;
+    text-align: center;
+     -moz-appearance: textfield; /* Remove default number input arrows in Firefox */
+}
+.stock-input-group input[type="number"]::-webkit-outer-spin-button,
+.stock-input-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; /* Remove default number input arrows in Chrome/Safari */
+    margin: 0;
+}
+.stock-input-group input[type="number"]:focus {
+     outline: none;
+     border-color: var(--primary-color);
+     box-shadow: 0 0 0 2px rgba(229, 95, 60, 0.2);
+}
+
+
+/* Responsive adjustments for inventory */
+@media (max-width: 480px) {
+     .inventory-controls {
+         flex-direction: column;
+         align-items: stretch;
+     }
+      .inventory-controls button {
+          width: 100%; /* Full width buttons */
+      }
+     #inventory-items-list li {
+         flex-direction: column;
+         align-items: flex-start;
+     }
+     .item-name {
+         margin-right: 0;
+         margin-bottom: 8px;
+     }
+     .stock-input-group {
+         width: 100%;
+         justify-content: space-between; /* Space out label/display/input */
+     }
+}
+
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+
+/* --- Add these styles to style.css --- */
+
 /* Styles for the employee stock editing control */
 #customer-view .menu li .item-stock {
      /* Keep existing styles for customer view's stock message (out of stock) */
