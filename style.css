@@ -1,6 +1,112 @@
 /* --- Google Font Import --- */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+/* --- Add these styles to style.css --- */
+
+#incoming-orders .order-statuses {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px 25px; /* Vertical and horizontal gap */
+    align-items: center;
+    font-size: 0.95em;
+}
+
+#incoming-orders .status-group {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between label and select */
+}
+
+#incoming-orders .status-group label {
+    font-weight: 600;
+    color: var(--secondary-dark);
+}
+
+#incoming-orders .status-group select {
+    font-family: var(--font-family);
+    padding: 5px 8px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    background-color: var(--light-bg);
+    cursor: pointer;
+    font-size: 0.95em;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#incoming-orders .status-group select:hover {
+     border-color: var(--secondary-color);
+}
+
+#incoming-orders .status-group select:focus-visible {
+     border-color: var(--primary-color);
+     box-shadow: 0 0 0 2px rgba(229, 95, 60, 0.2);
+}
+
+/* Optional: Style select based on value (requires JS to add classes or data attributes) */
+/* Example: */
+/*
+#incoming-orders select[data-status="Pending"] { color: var(--text-light); font-style: italic; }
+#incoming-orders select[data-status="In Progress"] { color: var(--warning-dark); font-weight: 500; }
+#incoming-orders select[data-status="Ready"] { color: var(--success-dark); font-weight: 600; }
+#incoming-orders select[data-status="Paid"] { color: var(--success-dark); font-weight: 600; }
+*/
+
+
+/* Adjust responsive styles if needed */
+@media (max-width: 480px) {
+    #incoming-orders .order-statuses {
+        flex-direction: column; /* Stack status groups vertically */
+        align-items: flex-start; /* Align groups to the left */
+        gap: 10px 0; /* Adjust gap for stacking */
+    }
+     #incoming-orders .status-group {
+         width: 100%; /* Make group take full width */
+         justify-content: space-between; /* Space out label and select */
+     }
+     #incoming-orders .status-group label {
+        flex-shrink: 0; /* Prevent label from shrinking */
+     }
+     #incoming-orders .status-group select {
+         flex-grow: 1; /* Allow select to grow */
+         max-width: 150px; /* Limit select width slightly */
+     }
+}
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+
+/* --- Add these styles to style.css --- */
+
+.notification {
+    position: fixed; /* Stay in place relative to the viewport */
+    top: 20px; /* 20px from the top */
+    right: 20px; /* 20px from the right */
+    z-index: 1050; /* High z-index to be on top */
+    background-color: rgba(0,0, 0, 0.85); /* Semi-transparent green */
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    opacity: 0; /* Initially hidden */
+    visibility: hidden; /* Hide completely when not visible */
+    pointer-events: none; /* Allows clicks on elements behind the notification */
+    transition: opacity 0.3s ease, visibility 0.3s ease; /* Smooth fade transition */
+    font-size: 0.95em;
+}
+
+.notification.show { /* Class to show the notification */
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- Rest of your existing CSS follows below --- */
+/* ... existing CSS code ... */
+
 /* --- CSS Variables (Color Palette & Theme) --- */
 :root {
     --primary-color: #e55f3c; /* Warm orange/coral */
