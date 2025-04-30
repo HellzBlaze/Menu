@@ -8,10 +8,10 @@
 </head>
 <body>
 
-    <div id="item-added-notification" class="notification"></div> <!-- ADD THIS LINE -->
+    <div id="item-added-notification" class="notification"></div>
 
     <div id="login-view" class="view login-container">
-        <h2>Welcome to the Antartican Food Stall! Please Login</h2>
+        <h2>Welcome! Please Login</h2>
         <div class="form-group">
             <label for="name">Your Name:</label>
             <input type="text" id="name" placeholder="Enter your name" required>
@@ -31,7 +31,7 @@
         <p id="login-error" class="error-message"></p>
     </div>
 
-    <div id="app-container" style="display: none;"> <!-- Initially hidden -->
+    <div id="app-container" style="display: none;">
         <header class="app-header">
             <h1>Restaurant Ordering</h1>
             <div id="user-info">
@@ -42,7 +42,7 @@
 
         <div class="container">
             <!-- Customer View -->
-            <div id="customer-view" class="view" style="display: none;"> <!-- Initially hidden -->
+            <div id="customer-view" class="view" style="display: none;">
                 <h2>Customer Order</h2>
                 <div class="menu">
                     <h3>Menu</h3>
@@ -62,12 +62,30 @@
             </div>
 
             <!-- Employee View -->
-            <div id="employee-view" class="view" style="display: none;"> <!-- Initially hidden -->
+            <div id="employee-view" class="view" style="display: none;">
                 <h2>Incoming Orders</h2>
                 <button id="clear-all-orders-btn">Clear All Orders (Admin)</button>
                 <div id="incoming-orders">
                     <p>No orders yet.</p>
                 </div>
+
+                <hr class="section-divider"> <!-- Optional separator -->
+
+                <!-- Inventory Management Section -->
+                <div class="inventory-section"> <!-- New wrapper div -->
+                     <h2>Inventory Management</h2>
+                     <div class="inventory-controls"> <!-- Buttons for the section -->
+                         <button id="save-stock-btn">Save All Stock Changes</button>
+                         <button id="reset-stock-btn" class="warning-button">Reset Stock to Initial</button>
+                     </div>
+
+                     <ul id="inventory-items-list">
+                         <!-- Inventory items will be loaded here by JS -->
+                         <li>Loading Inventory...</li>
+                     </ul>
+                </div> <!-- End inventory-section -->
+
+
             </div>
         </div> <!-- End .container -->
     </div> <!-- End #app-container -->
